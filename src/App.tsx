@@ -7,18 +7,8 @@ const path = d3.path();
 path.moveTo(0, 0);
 
 const data = [
-  { value: 0 },
-  { value: 20000 },
-  { value: 35000 },
-  { value: 70000 },
-  { value: 3000 },
-  { value: 35000 },
-  { value: 1000 },
-  { value: 20000 },
-  { value: 13000 },
-  { value: 70000 },
-  { value: 30000 },
-  { value: 60000 },
+  1000, 20000, 35000, 70000, 3000, 35000, 1000, 20000, 13000, 70000, 30000,
+  60000,
 ];
 
 const WIDTH = 700;
@@ -27,18 +17,18 @@ const HEIGHT = 400;
 const LENGTH = data.length;
 
 const MAX_VALUE = data.reduce(
-  (acc, { value }) => (value > acc ? value : acc),
-  data[0].value
+  (acc, value) => (value > acc ? value : acc),
+  data[0]
 );
 
-const coordinates = data.map<[number, number]>(({ value }, index) => {
+const coordinates = data.map<[number, number]>((value, index) => {
   return [
     (WIDTH / (LENGTH - 1)) * index,
     HEIGHT - (value / MAX_VALUE) * HEIGHT,
   ];
 });
 
-const reversed = data.map<[number, number]>(({ value }, index) => {
+const reversed = data.map<[number, number]>((value, index) => {
   return [
     (WIDTH / (LENGTH - 1)) * index,
     HEIGHT - (value / MAX_VALUE) * HEIGHT,
