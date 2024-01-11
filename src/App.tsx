@@ -72,7 +72,9 @@ function App() {
             top: mouseCoordinates.y - tooltipBounce.height,
           }}
         >
-          <Tooltip value={data[Math.floor(gradientIndex / 10)][1].toFixed(3)} />
+          <Tooltip
+            value={data[Math.floor(gradientIndex / 10)]?.[1]?.toFixed(3)}
+          />
         </div>
       )}
 
@@ -87,12 +89,19 @@ function App() {
           strokeWidth={2}
           onMouseMove={({ clientX: x, clientY: y }) => {
             setMouseCoordinates({ x, y });
+
+            const newGradientIndex = Math.floor(
+              ((x - transparentGraphBounce.left) /
+                transparentGraphBounce.width) *
+                100
+            );
+
             setGradientIndex(
-              Math.floor(
-                ((x - transparentGraphBounce.left) /
-                  transparentGraphBounce.width) *
-                  100
-              )
+              newGradientIndex < 0
+                ? 0
+                : newGradientIndex > 100
+                ? 100
+                : newGradientIndex
             );
           }}
         />
