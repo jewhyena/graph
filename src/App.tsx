@@ -6,7 +6,7 @@ import { useState } from "react";
 import useMeasure from "react-use-measure";
 import { motion } from "framer-motion";
 
-const data = [10, 30, 45, 40, 40, 40, 60, 58, 56, 65, 85, 100].map<
+const data = [10, 30, 40, 55, 40, 40, 60, 58, 56, 65, 85, 100].map<
   [number, number]
 >((v, i) => [i, v]);
 
@@ -32,6 +32,7 @@ function App() {
   const [tooltipRef, tooltipBounce] = useMeasure();
   const [transparentGraphRef, transparentGraphBounce] = useMeasure();
 
+  const [dataIndex, setDataIndex] = useState(0);
   const [gradientIndex, setGradientIndex] = useState(0);
 
   const [mouseCoordinates, setMouseCoordinates] = useState<Coordinates | null>(
@@ -72,9 +73,7 @@ function App() {
             top: mouseCoordinates.y - tooltipBounce.height,
           }}
         >
-          <Tooltip
-            value={data[Math.floor(gradientIndex / 10)]?.[1]?.toFixed(3)}
-          />
+          <Tooltip value={data[dataIndex]?.[1]?.toFixed(3)} />
         </div>
       )}
 
@@ -102,6 +101,20 @@ function App() {
                 : newGradientIndex > 100
                 ? 100
                 : newGradientIndex
+            );
+
+            const trueX = Math.round(x - transparentGraphBounce.left);
+
+            const cellWidth = transparentGraphBounce.width / (data.length - 1);
+
+            const newDataIndex = Math.floor(trueX / cellWidth) + 1;
+
+            setDataIndex(
+              newDataIndex <= 0
+                ? 0
+                : newDataIndex >= data.length - 1
+                ? data.length - 1
+                : newDataIndex
             );
           }}
         />
