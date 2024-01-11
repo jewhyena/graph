@@ -6,13 +6,16 @@ interface Props {
 
 const Tooltip: FC<Props> = ({ value }) => {
   return (
-    <>
+    <div
+      className="flex flex-col items-center"
+      style={{ transform: "scale(85%)" }}
+    >
       <div
         style={{
           background:
             "linear-gradient(0deg, #39B04A 2%, #5ABA43 15.59%, #9DCE34 46.64%, #CEDD2A 71.87%, #ECE623 89.34%, #F7E921 100.98%)",
         }}
-        className="pb-px pr-px rounded-lg"
+        className="pb-px pr-px rounded-lg -mb-px"
       >
         <div
           className="py-2 px-3 rounded-lg bg-neutral-600 flex items-center gap-2"
@@ -36,9 +39,8 @@ const Tooltip: FC<Props> = ({ value }) => {
           </div>
         </div>
       </div>
-
       <GreenArrow />
-    </>
+    </div>
   );
 };
 

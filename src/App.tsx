@@ -1,221 +1,206 @@
 import * as d3 from "d3";
-import { useRef, useState } from "react";
 import { generateLinearGradientArray } from "./utils";
 import Tooltip from "./components/Tooltip";
+import { format, subDays } from "date-fns";
+import { useState } from "react";
+import useMeasure from "react-use-measure";
+import { motion } from "framer-motion";
 
-const path = d3.path();
-path.moveTo(0, 0);
+const data = [10, 30, 45, 40, 40, 40, 60, 58, 56, 65, 85, 100].map<
+  [number, number]
+>((v, i) => [i, v]);
 
-const data = [
-  1000, 20000, 35000, 70000, 3000, 35000, 1000, 20000, 13000, 70000, 30000,
-  60000,
-];
-
-const WIDTH = 700;
-const HEIGHT = 400;
-
-const LENGTH = data.length;
-
-const MAX_VALUE = data.reduce(
-  (acc, value) => (value > acc ? value : acc),
-  data[0]
-);
-
-const coordinates = data.map<[number, number]>((value, index) => {
-  return [
-    (WIDTH / (LENGTH - 1)) * index,
-    HEIGHT - (value / MAX_VALUE) * HEIGHT,
-  ];
-});
-
-const reversed = data.map<[number, number]>((value, index) => {
-  return [
-    (WIDTH / (LENGTH - 1)) * index,
-    HEIGHT - (value / MAX_VALUE) * HEIGHT,
-  ];
-});
-
-const ys = data.map<number>((_, index) => {
-  return (HEIGHT / (LENGTH - 1)) * index;
-});
-
-const line = d3
-  .line()
-  .x((d) => d[0])
-  .y((d) => d[1])
-  .curve(d3.curveCatmullRom)(coordinates);
-
-const reversedline = d3
-  .line()
-  .x((d) => d[0])
-  .y((d) => d[1])
-  .curve(d3.curveCatmullRom)(reversed);
-
-const line2 = d3
-  .line()
-  .x((d) => d[0])
-  .y((d) => d[1])
-  .curve(d3.curveCatmullRom)(coordinates);
+const margin = {
+  top: 40,
+  right: 20,
+  bottom: 40,
+  left: 75,
+};
 
 const gradient = generateLinearGradientArray("#FFF961", "#34D399");
 
+type Coordinates = {
+  x: number;
+  y: number;
+};
+
+const tooptipCircleRadius = 4;
+
 function App() {
-  const ref = useRef<HTMLDivElement>(null);
+  const [ref, { width, height, left, top }] = useMeasure();
 
-  const rect = ref.current?.getBoundingClientRect();
-
-  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
-  const [tooltipCoords, setTooltipCoords] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [tooltipRef, tooltipBounce] = useMeasure();
+  const [transparentGraphRef, transparentGraphBounce] = useMeasure();
 
   const [gradientIndex, setGradientIndex] = useState(0);
 
+  const [mouseCoordinates, setMouseCoordinates] = useState<Coordinates | null>(
+    null
+  );
+
+  const xDomain = d3.extent(data.map((d) => d[0])) as [number, number];
+  const yDomain = d3.extent(data.map((d) => d[1])) as [number, number];
+
+  const xScale = d3
+    .scaleLinear()
+    .domain(xDomain)
+    .range([margin.left, width - margin.right]);
+
+  const yScale = d3
+    .scaleLinear()
+    .domain(yDomain)
+    .range([height - margin.top, margin.bottom]);
+
+  const line = d3
+    .line()
+    .x((d) => xScale(d[0]))
+    .y((d) => yScale(d[1]))
+    .curve(d3.curveCatmullRom)(data);
+
   return (
-    <div className="h-screen items-center flex justify-center">
-      <div className="flex justify-center items-center bg-[#1b1b1b]">
-        {tooltipCoords && (
-          <div
-            ref={ref}
-            style={{
-              left: tooltipCoords.x - (rect?.width ?? 0) / 2,
-              top: tooltipCoords.y - 56,
-            }}
-            className="absolute flex flex-col items-center pointer-events-none"
-          >
-            <Tooltip value="40.000" />
-          </div>
-        )}
-
-        <div className="w-[700px] bg-[#1b1b1b]">
-          <svg
-            width={WIDTH}
-            height={HEIGHT}
-            onMouseMove={() => {
-              coords && setGradientIndex(Math.round((coords.x / WIDTH) * 100));
-            }}
-          >
-            {/* Line with the circle on top of it */}
-            {coords && (
-              <g>
-                <circle
-                  cx={coords.x}
-                  cy={coords.y}
-                  stroke={gradient[gradientIndex]}
-                  strokeWidth={2}
-                  r={4.5}
-                ></circle>
-                <line
-                  x1={coords.x}
-                  y1={coords.y + 4}
-                  x2={coords.x}
-                  y2={HEIGHT}
-                  stroke={gradient[gradientIndex]}
-                  strokeWidth={2}
-                ></line>
-              </g>
-            )}
-
-            {/* Graph line */}
-            <path
-              d={line!}
-              fill="transparent"
-              stroke="url(#gradient)"
-              strokeWidth={3}
-            ></path>
-
-            {/* Fill graph background with bg-color to hide the graph line */}
-            <path
-              d={`${line2!} L${WIDTH} ${HEIGHT} L0 ${HEIGHT}`}
-              fill="#1b1b1b"
-            ></path>
-
-            {/* Fill graph with the gradient */}
-            <path
-              d={`${line2!} L${WIDTH} ${HEIGHT} L0 ${HEIGHT}`}
-              fill="url(#gradient)"
-              opacity={0.3}
-            ></path>
-
-            <Grid />
-
-            {/* Transparent container */}
-            <path
-              onMouseMove={({
-                nativeEvent: { clientX, clientY },
-                currentTarget,
-              }) => {
-                const rect = currentTarget.getBoundingClientRect();
-                setTooltipCoords({ x: clientX, y: clientY });
-                setCoords({ x: clientX - rect.left, y: clientY - rect.top });
-              }}
-              d={`${reversedline!} L${WIDTH} 0 L0 0 L0 L${HEIGHT}`}
-              stroke="none"
-              fill="transparent"
-            ></path>
-
-            {/* DEBUG DOTS */}
-            {/* {coordinates.map(([x, y]) => {
-            return <circle cx={x} cy={y} r={4} fill="blue"></circle>;
-          })} */}
-
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#FFF961" />
-                <stop offset="100%" stopColor="#34D399" />
-              </linearGradient>
-            </defs>
-          </svg>
+    <div
+      ref={ref}
+      className="h-full w-full"
+      onMouseLeave={() => setMouseCoordinates(null)}
+    >
+      {mouseCoordinates && (
+        <div
+          ref={tooltipRef}
+          className="absolute pointer-events-none"
+          style={{
+            left: mouseCoordinates.x - tooltipBounce.width / 2,
+            top: mouseCoordinates.y - tooltipBounce.height,
+          }}
+        >
+          <Tooltip value={data[Math.floor(gradientIndex / 10)][1].toFixed(3)} />
         </div>
-      </div>
+      )}
+
+      <svg viewBox={`0 0 ${width} ${height}`}>
+        {/* Transparent graph opposed to the gradient one */}
+        <path
+          ref={transparentGraphRef}
+          d={`${line} L${width - margin.right} 0 L${margin.left} 0 L${
+            margin.left
+          } ${height - margin.bottom}`}
+          fill="transparent"
+          strokeWidth={2}
+          onMouseMove={({ clientX: x, clientY: y }) => {
+            setMouseCoordinates({ x, y });
+            setGradientIndex(
+              Math.floor(
+                ((x - transparentGraphBounce.left) /
+                  transparentGraphBounce.width) *
+                  100
+              )
+            );
+          }}
+        />
+
+        {/* Vertical line with a circle on the top */}
+        <g className="pointer-events-none">
+          {mouseCoordinates && (
+            <g>
+              <circle
+                r={tooptipCircleRadius}
+                cx={mouseCoordinates.x - left}
+                cy={mouseCoordinates.y - top + tooptipCircleRadius}
+                stroke={gradient[gradientIndex]}
+                strokeWidth={2}
+              />
+              <line
+                x1={mouseCoordinates.x - left}
+                y1={mouseCoordinates.y - top + tooptipCircleRadius * 2}
+                x2={mouseCoordinates.x - left}
+                y2={height - margin.bottom - 1}
+                stroke={gradient[gradientIndex]}
+                strokeWidth={2}
+              />
+            </g>
+          )}
+        </g>
+
+        <path
+          d={`${line} L${width - margin.right} ${height - margin.bottom} L${
+            margin.left
+          } ${height - margin.bottom}`}
+          fill="#1b1b1b"
+        ></path>
+
+        {/* Ticks */}
+        <g className="pointer-events-none text-white/5">
+          {yScale.ticks(8).map((max) => (
+            <g key={max} transform={`translate(0,${yScale(max)})`}>
+              <line
+                x1={0}
+                x2={width - margin.right + 6}
+                stroke="currentColor"
+              />
+              <text
+                alignmentBaseline="before-edge"
+                className="text-[8px] font-normal leading-[8px]"
+                fill="#c3c3c3"
+              >
+                {max.toFixed(8)}
+              </text>
+            </g>
+          ))}
+
+          {xScale.ticks().map((max, index, arr) => (
+            <g key={max}>
+              <g transform={`translate(${xScale(max)},${height - 22})`}>
+                <text
+                  textAnchor="middle"
+                  className="text-[8px] font-normal leading-[8px]"
+                  fill="#c3c3c3"
+                >
+                  {format(subDays(new Date(), arr.length - 1 - index), "d MMM")}
+                </text>
+              </g>
+              <g transform={`translate(${xScale(max)},${margin.top})`}>
+                <line
+                  y1={0}
+                  y2={height - margin.top - margin.bottom + 8}
+                  stroke="currentColor"
+                />
+              </g>
+            </g>
+          ))}
+        </g>
+
+        {/* Graph line */}
+        <motion.path
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.5, type: "spring" }}
+          d={`${line}`}
+          fill="none"
+          stroke="url(#gradient)"
+          strokeWidth={2}
+        />
+
+        {/* Gradient fill */}
+        <motion.path
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.2 }}
+          transition={{ duration: 1, type: "spring" }}
+          d={`${line} L${width - margin.right} ${height - margin.bottom} L${
+            margin.left
+          } ${height - margin.bottom}`}
+          fill="url(#gradient)"
+          opacity={0.2}
+          stroke="url(#gradient)"
+        />
+
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#FFF961" />
+            <stop offset="100%" stopColor="#34D399" />
+          </linearGradient>
+        </defs>
+      </svg>
     </div>
   );
 }
-
-const Grid = () => {
-  return (
-    <g>
-      {coordinates.map(([x], index, arr) => {
-        // Skip rendering borders
-        if (!index || index === arr.length - 1) {
-          return;
-        }
-
-        return (
-          <line
-            key={index}
-            x1={x}
-            x2={x}
-            y1={0}
-            y2={HEIGHT}
-            stroke="white"
-            opacity={0.1}
-            strokeWidth={1}
-          ></line>
-        );
-      })}
-      {ys.map((y, index, arr) => {
-        // Skip rendering border
-        if (!index || index === arr.length - 1) {
-          return;
-        }
-
-        return (
-          <line
-            key={index}
-            x1={0}
-            x2={WIDTH}
-            y1={y}
-            y2={y}
-            stroke="white"
-            opacity={0.1}
-            strokeWidth={1}
-          ></line>
-        );
-      })}
-    </g>
-  );
-};
 
 export default App;
