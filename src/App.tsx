@@ -10,7 +10,7 @@ const margin = {
   top: 40,
   right: 20,
   bottom: 40,
-  left: 75,
+  left: 30,
 };
 
 const gradient = generateLinearGradientArray("#FFF961", "#34D399");
@@ -22,7 +22,13 @@ type Coordinates = {
 
 const tooptipCircleRadius = 4;
 
-function App({ data }: { data: [number, number][] }) {
+function App({
+  data,
+  customDate,
+}: {
+  data: [number, number][];
+  customDate?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const bounds = ref.current?.getBoundingClientRect();
 
@@ -75,7 +81,7 @@ function App({ data }: { data: [number, number][] }) {
             top: mouseCoordinates.y + window.scrollY - tooltipBounce.height,
           }}
         >
-          <Tooltip value={data[dataIndex]?.[1]?.toFixed(3)} />
+          <Tooltip value={data[dataIndex]?.[1].toString()} />
         </div>
       )}
 
@@ -165,7 +171,7 @@ function App({ data }: { data: [number, number][] }) {
                 className="text-[8px] font-normal leading-[8px]"
                 fill="#c3c3c3"
               >
-                {max.toFixed(8)}
+                {max}
               </text>
             </g>
           ))}
@@ -178,7 +184,15 @@ function App({ data }: { data: [number, number][] }) {
                   className="text-[8px] font-normal leading-[8px]"
                   fill="#c3c3c3"
                 >
-                  {format(subDays(new Date(), arr.length - 1 - index), "d MMM")}
+                  {format(
+                    subDays(
+                      customDate
+                        ? new Date("2024-01-06T00:00:00Z")
+                        : new Date(),
+                      arr.length - 1 - index
+                    ),
+                    "d MMM"
+                  )}
                 </text>
               </g>
               <g transform={`translate(${xScale(max)},${margin.top})`}>

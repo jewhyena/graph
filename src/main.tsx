@@ -7,7 +7,7 @@ const data1 = [10, 30, 40, 55, 40, 40, 60, 58, 56, 65, 85, 100].map<
   [number, number]
 >((v, i) => [i, v]);
 
-const data2 = [100, 30, 40, 55, 40, 40, 60, 58, 56, 65, 85, 90].map<
+const data2 = [100, 30, 40, 55, 40, 240, 60, 58, 56, 65, 85, 90].map<
   [number, number]
 >((v, i) => [i, v]);
 
@@ -28,7 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <div className="bg-[#1b1b1b] max-w-[600px] w-full pl-6 pr-2.5 pt-6 rounded-2xl">
         <p className="text-lg font-semibold text-white -mb-3">Engagement</p>
         <div className="h-[342px] rounded-2xl">
-          <App data={data2} />
+          <App data={data2} customDate />
         </div>
       </div>
 
