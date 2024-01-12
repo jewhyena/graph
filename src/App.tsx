@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { generateLinearGradientArray } from "./utils";
 import Tooltip from "./components/Tooltip";
 import { format, subDays } from "date-fns";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 import { motion } from "framer-motion";
 
@@ -23,7 +23,13 @@ type Coordinates = {
 const tooptipCircleRadius = 4;
 
 function App({ data }: { data: [number, number][] }) {
-  const [ref, { width, height, left, top }] = useMeasure();
+  const ref = useRef<HTMLDivElement>(null);
+  const bounds = ref.current?.getBoundingClientRect();
+
+  const width = bounds?.width ?? 0;
+  const height = bounds?.height ?? 0;
+  const left = bounds?.left ?? 0;
+  const top = bounds?.top ?? 0;
 
   const [tooltipRef, tooltipBounce] = useMeasure();
   const [transparentGraphRef, transparentGraphBounce] = useMeasure();
@@ -65,8 +71,8 @@ function App({ data }: { data: [number, number][] }) {
           ref={tooltipRef}
           className="absolute pointer-events-none"
           style={{
-            left: mouseCoordinates.x - tooltipBounce.width / 2,
-            top: mouseCoordinates.y - tooltipBounce.height,
+            left: mouseCoordinates.x + window.scrollX - tooltipBounce.width / 2,
+            top: mouseCoordinates.y + window.scrollY - tooltipBounce.height,
           }}
         >
           <Tooltip value={data[dataIndex]?.[1]?.toFixed(3)} />
@@ -105,7 +111,7 @@ function App({ data }: { data: [number, number][] }) {
           } ${height - margin.bottom}`}
           fill="transparent"
           strokeWidth={2}
-          onMouseMove={({ pageX: x, pageY: y }) => {
+          onMouseMove={({ clientX: x, clientY: y }) => {
             setMouseCoordinates({ x, y });
 
             const newGradientIndex = Math.floor(
@@ -215,6 +221,32 @@ function App({ data }: { data: [number, number][] }) {
             <stop offset="0%" stopColor="#FFF961" />
             <stop offset="100%" stopColor="#34D399" />
           </linearGradient>
+        </defs>
+
+        <defs xmlns="http://www.w3.org/2000/svg">
+          <filter
+            id="filter0_b_20558_46513"
+            x="-40"
+            y="-40"
+            width="189"
+            height="112"
+            filterUnits="userSpaceOnUse"
+            color-interpolation-filters="sRGB"
+          >
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feGaussianBlur in="BackgroundImageFix" stdDeviation="20" />
+            <feComposite
+              in2="SourceAlpha"
+              operator="in"
+              result="effect1_backgroundBlur_20558_46513"
+            />
+            <feBlend
+              mode="normal"
+              in="SourceGraphic"
+              in2="effect1_backgroundBlur_20558_46513"
+              result="shape"
+            />
+          </filter>
         </defs>
       </svg>
     </div>
