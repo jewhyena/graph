@@ -6,10 +6,6 @@ import { useState } from "react";
 import useMeasure from "react-use-measure";
 import { motion } from "framer-motion";
 
-const data = [10, 30, 40, 55, 40, 40, 60, 58, 56, 65, 85, 100].map<
-  [number, number]
->((v, i) => [i, v]);
-
 const margin = {
   top: 40,
   right: 20,
@@ -26,7 +22,7 @@ type Coordinates = {
 
 const tooptipCircleRadius = 4;
 
-function App() {
+function App({ data }: { data: [number, number][] }) {
   const [ref, { width, height, left, top }] = useMeasure();
 
   const [tooltipRef, tooltipBounce] = useMeasure();
@@ -78,6 +74,29 @@ function App() {
       )}
 
       <svg viewBox={`0 0 ${width} ${height}`}>
+        {/* Vertical line with a circle on the top */}
+        {mouseCoordinates && (
+          <g className="pointer-events-none">
+            <g>
+              <circle
+                r={tooptipCircleRadius}
+                cx={mouseCoordinates.x - left}
+                cy={mouseCoordinates.y - top + tooptipCircleRadius}
+                stroke={gradient[gradientIndex]}
+                strokeWidth={2}
+              />
+              <line
+                x1={mouseCoordinates.x - left}
+                y1={mouseCoordinates.y - top + tooptipCircleRadius * 2}
+                x2={mouseCoordinates.x - left}
+                y2={height - margin.bottom - 1}
+                stroke={gradient[gradientIndex]}
+                strokeWidth={2}
+              />
+            </g>
+          </g>
+        )}
+
         {/* Transparent graph opposed to the gradient one */}
         <path
           ref={transparentGraphRef}
@@ -86,7 +105,7 @@ function App() {
           } ${height - margin.bottom}`}
           fill="transparent"
           strokeWidth={2}
-          onMouseMove={({ clientX: x, clientY: y }) => {
+          onMouseMove={({ pageX: x, pageY: y }) => {
             setMouseCoordinates({ x, y });
 
             const newGradientIndex = Math.floor(
@@ -118,29 +137,6 @@ function App() {
             );
           }}
         />
-
-        {/* Vertical line with a circle on the top */}
-        <g className="pointer-events-none">
-          {mouseCoordinates && (
-            <g>
-              <circle
-                r={tooptipCircleRadius}
-                cx={mouseCoordinates.x - left}
-                cy={mouseCoordinates.y - top + tooptipCircleRadius}
-                stroke={gradient[gradientIndex]}
-                strokeWidth={2}
-              />
-              <line
-                x1={mouseCoordinates.x - left}
-                y1={mouseCoordinates.y - top + tooptipCircleRadius * 2}
-                x2={mouseCoordinates.x - left}
-                y2={height - margin.bottom - 1}
-                stroke={gradient[gradientIndex]}
-                strokeWidth={2}
-              />
-            </g>
-          )}
-        </g>
 
         <path
           d={`${line} L${width - margin.right} ${height - margin.bottom} L${
